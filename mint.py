@@ -1,6 +1,5 @@
-#from decimal import *
-
 from decimal import *
+from hashlib import sha256
 
 class MintTag(object):
     """docstring for MintTag."""
@@ -17,30 +16,44 @@ class MintTransaction(object):
         self.date = date
         self.description = description
         self.originalDescription = originalDescription
-        self.amount = amount #Decimal(amount)
+        self.amount = amount
         self.transactionType = transactionType
         self.category = category
         self.accountName = accountName
+        self.lables_raw = labels
         self.labels = []
         for label in labels.split():
             self.labels.append(MintTag(label))
         self.notes = notes
+        self.setID()
 
     def __init__(self, csvRow):
         self.date = csvRow[0]
         self.description = csvRow[1]
         self.originalDescription = csvRow[2]
-        self.amount = csvRow[3] #Decimal(csvRow[3])
+        self.amount = csvRow[3]
         self.transactionType = csvRow[4]
         self.category = csvRow[5]
         self.accountName = csvRow[6]
+        self.lables_raw = csvRow[7]
         self.labels = []
         for label in csvRow[7].split():
             self.labels.append(MintTag(label))
         self.notes = csvRow[8]
+        self.setID()
 
     def __str__(self):
-        return '\nDate:        ' + self.date + '\nDescription: ' + self.description + '\nAmount:      ' + self.amount +'\nCategory:    ' + self.category +'\nAccount:     ' + self.accountName
+        return '|' + self.date \
+            + '|' + self.description \
+            + '|' + self.originalDescription \
+            + '|' + self.amount \
+            + '|' + self.transactionType \
+            + '|' + self.category \
+            + '|' + self.accountName \
+            + '|' + self.lables_raw \
+            + '|' + self.notes \
+            + '|'
+
 
     def getSplitAmount(self):
         amount = Decimal(self.amount)
@@ -54,18 +67,8 @@ class MintTransaction(object):
             lables = lables + l.__str__()
         return lables
 
-'''
-    def sameTransaction(self, transaction):
-        return (self.date == transaction.date and
-            self.description == transaction.description and
-            self.originalDescription == transaction.originalDescription and
-            self.amount == transaction.amount and
-            self.transactionType == transaction.transactionType and
-            self.category == transaction.category and
-            self.accountName == transaction.accountName and
-            self.labels == transaction.labels and
-            self.notes == transaction.notes )
-'''
+    def setID(self):
+        self.id = sha256(self.__str__()).hexdigest()
 
 class MintSplit(object):
 

@@ -72,17 +72,27 @@ def readCategories(filename):
     logging.debug(categories)
     return categories
 
-def readTransactions(filename):
-    '''Read the Mint.com transactions file.'''
+def readTransactions(filename, log):
+    '''Read the Mint.com transactions file or transactions log.'''
     transactions = []
+    logIDs = [l.id for l in log]
     with open(filename, 'r') as fd:
         transactionsReader = csv.reader(fd)
         for row in transactionsReader:
             if transactionsReader.line_num == 1:
                 continue
-            transaction = MintTransaction(row)
-            transactions.append( transaction )
-            logging.debug(transaction)
+            try:
+                transaction = MintTransaction(row)
+                if transaction.id in logIDs:
+                    logging.debug('[' + transaction.id + '] (skipped): ' + transaction.__str__())
+                else:
+                    logging.debug('reading: ' + transaction.__str__())
+                    transactions.append( transaction )
+            except IndexError:
+                if row[0].startswith( '#' ):
+                    logging.debug('comment (skipped):' + "|".join(row) )
+                else:
+                    logging.warning('malformed line (skipped):' + "|".join(row) )
     return transactions
 
 # Main entry point.
@@ -119,7 +129,7 @@ def main():
 
     accounts = readAccounts(args.accountsfile)
     categories = readCategories(args.categoriesfile)
-    transactions = readTransactions(args.transactionsfile)
+    transactions = readTransactions(args.transactionsfile, [])
     splits = []
 
     #if not args.nochange:
