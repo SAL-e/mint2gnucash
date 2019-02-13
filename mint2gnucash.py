@@ -5,7 +5,7 @@ VERSION = "0.1"
 # python imports
 import argparse
 import logging
-#import os
+import os
 #import json
 import csv
 import datetime
@@ -72,10 +72,18 @@ def readCategories(filename):
     logging.debug(categories)
     return categories
 
-def readTransactions(filename, log):
+def readTransactions(filename, log, fileMessage, isError=False):
     '''Read the Mint.com transactions file or transactions log.'''
     transactions = []
     logIDs = [l.id for l in log]
+    logging.info(' Reading the '+fileMessage+' file: '+filename+' ...')
+    exists = os.path.isfile(filename)
+    if not exists:
+        if isError:
+            logging.error(' No '+fileMessage+' file found.')
+        else:
+            logging.warning(' No '+fileMessage+' file found.')
+        return transactions
     with open(filename, 'r') as fd:
         transactionsReader = csv.reader(fd)
         for row in transactionsReader:
@@ -93,7 +101,17 @@ def readTransactions(filename, log):
                     logging.debug('comment (skipped):' + "|".join(row) )
                 else:
                     logging.warning('malformed line (skipped):' + "|".join(row) )
+    logging.info(' Done.')
     return transactions
+
+def writeTransactionsLog(transactions, filename, begin, end):
+    with open(filename, 'a') as fd:
+        fd.write("# --- mint2gnucash.py: Session begins at: "+begin+" ---\n")
+        transactionsWriter = csv.writer(fd, lineterminator='\n', quoting=csv.QUOTE_ALL)
+        for transaction in transactions:
+            logging.info(transaction)
+            transactionsWriter.writerow(transaction.getMintFileds())
+        fd.write("# --- mint2gnucash.py: Session ends at: "+end+" ---\n")
 
 # Main entry point.
 # 1. Parse command line.
@@ -129,7 +147,8 @@ def main():
 
     accounts = readAccounts(args.accountsfile)
     categories = readCategories(args.categoriesfile)
-    transactions = readTransactions(args.transactionsfile, [])
+    transactionsLog = readTransactions(args.transactionsfile+'.log', [], 'transactions log' )
+    transactions = readTransactions(args.transactionsfile, transactionsLog, 'transactions', True)
     splits = []
 
     #if not args.nochange:
@@ -154,7 +173,10 @@ def main():
         if len(split.transactions) > 1:
             split.printSplit()
     '''
+    sessionBegins = str(datetime.datetime.now())
+    transactionsImported = []
     for split in splits:
+        transactionsCache = []
         print(split.getDate(),split.getAccountName(),split.getDescription(),split.getOriginalDescription(),split.getTotal())
         gnucash_transaction = GnucashTransaction(datetime.datetime.strptime(split.getDate(),'%m/%d/%Y'), split.getDescription(), split.getOriginalDescription())
         gnucash_split = GnucashSplit(accounts[split.getAccountName()],split.getTotal(),'mint2gnucash.py: '+str(datetime.datetime.now()))
@@ -162,9 +184,15 @@ def main():
         for transaction in split.getTransactions():
             gnucash_split = GnucashSplit(categories[transaction.category],transaction.getSplitAmount(),(transaction.notes+' ['+transaction.getLabelsStr()+']').strip())
             gnucash_split.setParent(gnucash_transaction)
+            transactionsCache.append(transaction)
         gnucash_book.write_transactions([gnucash_transaction])
+        for item in transactionsCache:
+            transactionsImported.append(item)
+    sessionEnds = str(datetime.datetime.now())
 
     gnucash_book.close(args.nochange)
+    if not args.nochange:
+        writeTransactionsLog(transactionsImported, args.transactionsfile+".log", sessionBegins, sessionEnds)
 
 if __name__ == "__main__":
     main()

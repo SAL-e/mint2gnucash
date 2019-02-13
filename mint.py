@@ -54,7 +54,6 @@ class MintTransaction(object):
             + '|' + self.notes \
             + '|'
 
-
     def getSplitAmount(self):
         amount = Decimal(self.amount)
         if self.transactionType == 'credit':
@@ -69,6 +68,17 @@ class MintTransaction(object):
 
     def setID(self):
         self.id = sha256(self.__str__()).hexdigest()
+
+    def getMintFileds(self):
+        return [self.date, \
+            self.description, \
+            self.originalDescription, \
+            self.amount, \
+            self.transactionType, \
+            self.category, \
+            self.accountName, \
+            self.lables_raw, \
+            self.notes]
 
 class MintSplit(object):
 
