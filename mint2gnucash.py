@@ -28,6 +28,8 @@ def parse_cmdline():
                         help="Suppress normal output (except errors).")
     parser.add_argument('-n', '--nochange', action='store_true',
                         help="Do not modify gnucash file. No effect if using SQL.")
+    parser.add_argument('-e', '--expiration', dest='expirationDate',
+                        help="Transaction expiration date in Mint.com format m/d/YYYY. Default Janurary 1st, Current Year. Expired transactions are ignored by mint2gnucash.")
 #    parser.add_argument(
 #        "ac2fix", help="Full path of account to fix, e.g. Liabilities:CreditCard")
     parser.add_argument("accountsfile", help="Accounts file. See doc for format.")
@@ -72,6 +74,10 @@ def readCategories(filename):
     logging.debug(categories)
     return categories
 
+def isExpired(transaction):
+    return datetime.datetime.strptime(transaction.date,'%m/%d/%Y') < \
+        expirationDT
+
 def readTransactions(filename, log, fileMessage, isError=False):
     '''Read the Mint.com transactions file or transactions log.'''
     transactions = []
@@ -91,7 +97,7 @@ def readTransactions(filename, log, fileMessage, isError=False):
                 continue
             try:
                 transaction = MintTransaction(row)
-                if transaction.id in logIDs:
+                if isExpired(transaction) or (transaction.id in logIDs):
                     logging.debug('[' + transaction.id + '] (skipped): ' + transaction.__str__())
                 else:
                     logging.debug('reading: ' + transaction.__str__())
@@ -134,6 +140,13 @@ def main():
     else:
         loglevel = logging.INFO
     logging.basicConfig(level=loglevel)
+
+    global expirationDT
+    if args.expirationDate:
+        expirationDT=datetime.datetime.strptime(args.expirationDate,'%m/%d/%Y')
+    else:
+        expirationDT=datetime.datetime.strptime(str(datetime.datetime.now().year),'%Y')
+    logging.info('Transaction expiration date: '+str(expirationDT))
 
     ##imported_cache = os.path.expanduser('~/.gnucash-mint-import-cache.json')
     #imported_cache = os.path.expanduser('.gnucash-mint-import-cache.json')
