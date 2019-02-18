@@ -34,7 +34,8 @@ def parse_cmdline():
 #        "ac2fix", help="Full path of account to fix, e.g. Liabilities:CreditCard")
     parser.add_argument("accountsfile", help="Accounts file. See doc for format.")
     parser.add_argument("categoriesfile", help="Categories file. See doc for format.")
-    parser.add_argument("transactionsfile", help="CSV file of Mint.com transactions.")
+    parser.add_argument('-t', '--transactions', dest="transactionsfile",
+        default="transactions.csv", help="CSV file of Mint.com transactions.")
     parser.add_argument("gnucash_file", help="GnuCash file to modify.")
     args = parser.parse_args()
     return args
