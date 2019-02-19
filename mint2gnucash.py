@@ -144,12 +144,14 @@ def main():
         loglevel = logging.INFO
     logging.basicConfig(level=loglevel)
 
+    conf_path=os.path.splitext(args.gnucash_file)[0]+'.mint2gnucash/'
+    logging.info(' mint2gnucash configuration path: '+conf_path)
     global expirationDT
     if args.expirationDate:
         expirationDT=datetime.datetime.strptime(args.expirationDate,'%m/%d/%Y')
     else:
         expirationDT=datetime.datetime.strptime(str(datetime.datetime.now().year),'%Y')
-    logging.info('Transaction expiration date: '+str(expirationDT))
+    logging.info(' Transaction expiration date: '+str(expirationDT))
 
     ##imported_cache = os.path.expanduser('~/.gnucash-mint-import-cache.json')
     #imported_cache = os.path.expanduser('.gnucash-mint-import-cache.json')
@@ -158,12 +160,11 @@ def main():
     #        imported = set(json.load(fd))
     #else:
     #    imported = set()
-
     gnucash_book = GnucashBook(args.gnucash_file, 'USD', is_new=False)
 
-    accounts = readAccounts(args.accountsfile)
-    categories = readCategories(args.categoriesfile)
-    transactionsLog = readTransactions(args.transactionsfile+'.log', [], 'transactions log' )
+    accounts = readAccounts(conf_path+args.accountsfile)
+    categories = readCategories(conf_path+args.categoriesfile)
+    transactionsLog = readTransactions(conf_path+args.transactionsfile+'.log', [], 'transactions log' )
     transactions = readTransactions(args.transactionsfile, transactionsLog, 'transactions', True)
     splits = []
 
@@ -208,7 +209,7 @@ def main():
 
     gnucash_book.close(args.nochange)
     if not args.nochange:
-        writeTransactionsLog(transactionsImported, args.transactionsfile+".log", sessionBegins, sessionEnds)
+        writeTransactionsLog(transactionsImported, conf_path+args.transactionsfile+".log", sessionBegins, sessionEnds)
 
 if __name__ == "__main__":
     main()
