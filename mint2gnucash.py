@@ -2,36 +2,27 @@
 
 VERSION = "0.1"
 
-# python imports
 import argparse
 import logging
 import os
-#import json
 import csv
 import datetime
 
-#from mint import MintTransaction, MintSplit
 from mint import *
 from gnucashBook import GnucashBook, GnucashTransaction, GnucashSplit
 
 def parse_cmdline():
     parser = argparse.ArgumentParser()
-#    parser.add_argument('-i', '--imbalance-ac', default="Imbalance-[A-Z]{3}",
-#                        help="Imbalance account name pattern. Default=Imbalance-[A-Z]{3}")
     parser.add_argument('--version', action='store_true',
-                        help="Display version and exit.")
-#    parser.add_argument('-m', '--use_memo', action='store_true',
-#                        help="Use memo field instead of description field to match rules.")
+        help="Display version and exit.")
     parser.add_argument('-v', '--verbose', action='store_true',
-                        help="Verbose (debug) logging.")
+        help="Verbose (debug) logging.")
     parser.add_argument('-q', '--quiet', action='store_true',
-                        help="Suppress normal output (except errors).")
+        help="Suppress normal output (except errors).")
     parser.add_argument('-n', '--nochange', action='store_true',
-                        help="Do not modify gnucash file. No effect if using SQL.")
+        help="Do not modify gnucash file. No effect if using SQL.")
     parser.add_argument('-e', '--expiration', dest='expirationDate',
-                        help="Transaction expiration date in Mint.com format m/d/YYYY. Default Janurary 1st, Current Year. Expired transactions are ignored by mint2gnucash.")
-#    parser.add_argument(
-#        "ac2fix", help="Full path of account to fix, e.g. Liabilities:CreditCard")
+        help="Transaction expiration date in Mint.com format m/d/YYYY. Default Janurary 1st, Current Year. Expired transactions are ignored by mint2gnucash.")
     parser.add_argument('-a', '--accounts', dest="accountsfile",
         default="accounts.csv", help="Accounts file. See doc for format. Default:'accounts.csv'")
     parser.add_argument('-c', '--categories', dest="categoriesfile",
@@ -70,7 +61,6 @@ def readCategories(filename):
     with open(filename, 'r') as fd:
         categoriesReader = csv.reader(fd)
         cvs_categories = list(categoriesReader)
-#    cvs_categories = [line for line in cvs_categories if not line[0].startswith('#')]
     for line in cvs_categories:
         if not line[0].startswith('#'):
             categories[line[1]]=line[0]
@@ -123,12 +113,6 @@ def writeTransactionsLog(transactions, filename, begin, end):
         fd.write("# --- mint2gnucash.py: Session ends at: "+end+" ---\n")
 
 # Main entry point.
-# 1. Parse command line.
-# x. Read .gnucash-mint-import-cache.json
-# 2. Open gnucash_file
-# 3. Read all transactions.
-# x. Save imported transactions into .gnucash-mint-import-cache.json
-# 4. Close gnucash_file (without saving changes if --nochange is set)
 #
 def main():
     args = parse_cmdline()
@@ -153,13 +137,6 @@ def main():
         expirationDT=datetime.datetime.strptime(str(datetime.datetime.now().year),'%Y')
     logging.info(' Transaction expiration date: '+str(expirationDT))
 
-    ##imported_cache = os.path.expanduser('~/.gnucash-mint-import-cache.json')
-    #imported_cache = os.path.expanduser('.gnucash-mint-import-cache.json')
-    #if os.path.exists(imported_cache):
-    #    with open(imported_cache) as fd:
-    #        imported = set(json.load(fd))
-    #else:
-    #    imported = set()
     gnucash_book = GnucashBook(args.gnucash_file, 'USD', is_new=False)
 
     accounts = readAccounts(conf_path+args.accountsfile)
@@ -168,28 +145,10 @@ def main():
     transactions = readTransactions(args.transactionsfile, transactionsLog, 'transactions', True)
     splits = []
 
-    #if not args.nochange:
-    #    with open(imported_cache, 'wb') as fd:
-    #        json.dump(list(imported), fd)
-
-    '''
-    accounts = []
-    for transaction in transactions:
-        if not transaction.accountName in accounts:
-            accounts.append(transaction.accountName)
-    print('\n\n')
-    print(accounts)
-    '''
-
     while len(transactions) > 0:
         transaction = transactions.pop()
         splits.append(MintSplit(transaction,transactions))
 
-    '''
-    for split in splits:
-        if len(split.transactions) > 1:
-            split.printSplit()
-    '''
     sessionBegins = str(datetime.datetime.now())
     transactionsImported = []
     for split in splits:
