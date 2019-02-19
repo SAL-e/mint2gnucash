@@ -32,8 +32,10 @@ def parse_cmdline():
                         help="Transaction expiration date in Mint.com format m/d/YYYY. Default Janurary 1st, Current Year. Expired transactions are ignored by mint2gnucash.")
 #    parser.add_argument(
 #        "ac2fix", help="Full path of account to fix, e.g. Liabilities:CreditCard")
-    parser.add_argument("accountsfile", help="Accounts file. See doc for format.")
-    parser.add_argument("categoriesfile", help="Categories file. See doc for format.")
+    parser.add_argument('-a', '--accounts', dest="accountsfile",
+        default="accounts.csv", help="Accounts file. See doc for format. Default:'accounts.csv'")
+    parser.add_argument('-c', '--categories', dest="categoriesfile",
+        default="categories.csv", help="Categories file. See doc for format. Default:'categories.csv'")
     parser.add_argument('-t', '--transactions', dest="transactionsfile",
         default="transactions.csv", help="CSV file of Mint.com transactions.")
     parser.add_argument("gnucash_file", help="GnuCash file to modify.")
