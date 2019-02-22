@@ -153,15 +153,19 @@ def main():
     transactionsImported = []
     for split in splits:
         transactionsCache = []
-        print(split.getDate(),split.getAccountName(),split.getDescription(),split.getOriginalDescription(),split.getTotal())
-        gnucash_transaction = GnucashTransaction(datetime.datetime.strptime(split.getDate(),'%m/%d/%Y'), split.getDescription(), split.getOriginalDescription())
-        gnucash_split = GnucashSplit(accounts[split.getAccountName()],split.getTotal(),'mint2gnucash.py: '+str(datetime.datetime.now()))
-        gnucash_split.setParent(gnucash_transaction)
-        for transaction in split.getTransactions():
-            gnucash_split = GnucashSplit(categories[transaction.category],transaction.getSplitAmount(),(transaction.notes+' ['+transaction.getLabelsStr()+']').strip())
+        try:
+            gnucash_transaction = GnucashTransaction(datetime.datetime.strptime(split.getDate(),'%m/%d/%Y'), split.getDescription(), split.getOriginalDescription())
+            gnucash_split = GnucashSplit(accounts[split.getAccountName()],split.getTotal(),'mint2gnucash.py: '+str(datetime.datetime.now()))
             gnucash_split.setParent(gnucash_transaction)
-            transactionsCache.append(transaction)
-        gnucash_book.write_transactions([gnucash_transaction])
+            for transaction in split.getTransactions():
+                gnucash_split = GnucashSplit(categories[transaction.category],transaction.getSplitAmount(),(transaction.notes+' ['+transaction.getLabelsStr()+']').strip())
+                gnucash_split.setParent(gnucash_transaction)
+                transactionsCache.append(transaction)
+            gnucash_book.write_transactions([gnucash_transaction])
+            logging.info(' Importing spilt... '+str(split))
+        except KeyError as e:
+            logging.warning(' Mint account or category: '+str(e)+' is linked to GnuCash account...')
+            logging.warning('   skipping split... '+str(split))
         for item in transactionsCache:
             transactionsImported.append(item)
     sessionEnds = str(datetime.datetime.now())

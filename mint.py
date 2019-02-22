@@ -124,3 +124,11 @@ class MintSplit(object):
 
     def getTransactions(self):
         return self.transactions
+
+    def __str__(self):
+        return '|' + self.getDate() \
+            + '|' + self.getAccountName() \
+            + '|' + self.getDescription() \
+            + '|' + self.getOriginalDescription() \
+            + '|' + str(self.getTotal()) \
+            + '|'
