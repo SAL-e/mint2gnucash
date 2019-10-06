@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 VERSION = "0.1"
+#TODO: mint2gnucash: fix crash if gnucash account is missing
+#TODO: mint2gnucash: fix crash if gnucash file is opened
 
 import argparse
 import logging
